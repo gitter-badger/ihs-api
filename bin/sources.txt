@@ -1,0 +1,7 @@
+http://help.waterdata.usgs.gov/output-formats#IV_gif
+http://help.waterdata.usgs.gov/codes-and-parameters/codes#rated
+http://www.waterqualitydata.us/portal.jsp
+http://www.ncdc.noaa.gov/stormevents/
+http://www.aoml.noaa.gov/hrd/hurdat/DataByYearandStorm.html
+http://waterwatch.usgs.gov/
+
