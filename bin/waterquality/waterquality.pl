@@ -7,6 +7,8 @@ use WWW::Mechanize;
 use Try::Tiny;
 use Term::ANSIColor;
 
+our $json_obj = {};
+
 my $mech = WWW::Mechanize->new();
 
 
@@ -84,29 +86,34 @@ sub GetSiteIdsJSON($)
     
     my @keys = keys %$obj;
 
-    try {
-        
-        for(my $i = 0; $i < @keys; $i++)
-        { 
-
+    for(my $i = 0; $i < @keys; $i++)
+    { 
+        try
+        {
             my $site_id = "USGS-$keys[$i]";
             GetDataBySiteId($site_id);
-            
+        
             print color "green";
             print "$site_id - Downloaded \n";
             print color "reset";
-
+            
+            if($i % 100 == 0)
+            {
+                WriteInJSONFile("data.json");
+            }
         }
+        catch
+        {
+            print color "red";
+            print $_;
+            print color "reset";
+            
+            WriteInJSONFile("data.json"); 
 
-    } catch {
-        
-        print color "red";
-        print $_;
-        print color "reset";
+            next;
+        }
+    }
 
-        #next;
-
-    };
 }
 
 
@@ -117,15 +124,64 @@ sub GetDataBySiteId($)
     my $url = 'http://www.waterqualitydata.us/Result/search?countrycode=US&statecode=US%3A06&countycode=US%3A06%3A001&mimeType=csv&zip=no&siteid='.$site_id;
     my $csv = $mech->get( $url ) or die "$site_id - FAILED, $!";
     $csv = $$csv{_content};
+    
+    my @lines = split("\n", $csv, -1); 
+    
+    my @keys_arr = split(",", $lines[0], -1);
 
+    if(@keys_arr > 1)
+    {
+
+        if(!defined $$json_obj{ $site_id })
+        {
+            $$json_obj{ $site_id } = [];
+        }
+
+        for(my $i = 1; $i < @lines; $i++)
+        {
+            my @content = split(",", $lines[$i], -1);
+            my $line_obj = {};
+
+            for(my $k = 0; $k < @content; $k++)
+            {
+                if(!$keys_arr[$k])
+                {
+                    next;
+                }
+
+                $$line_obj{ $keys_arr[$k] } = $content[$k];
+            }
+
+            push @{ $$json_obj{ $site_id } }, $line_obj;
+        }
+
+    }
+=comment
     my $fh2;
     open $fh2, ">", "csv/${site_id}.csv" or die "$site_id - FAILED, $!";
     print $fh2 $csv;
     close $fh2 or die "$site_id - FAILED, $!";
+=cut
 
     return 1;
 }
 
+sub WriteInJSONFile($)
+{
+    my ($file_name) = @_;
+    
+    my $json = to_json($json_obj);
+
+    my $fh2;
+    open $fh2, ">", $file_name or die $!;
+    print $fh2 $json;
+    close $fh2 or die $!;
+    
+    print "FLUSH \n";
+}
+
 #GetSiteIdsXML("sites.xml");
 GetSiteIdsJSON("../usgs-sites-current-info.json");
+
+WriteInJSONFile("data.json");
 
