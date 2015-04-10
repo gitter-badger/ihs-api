@@ -1,5 +1,5 @@
 use strict;
-use warnings;
+#use warnings;
 
 use Data::Dumper;
 use JSON;
@@ -8,8 +8,8 @@ use Try::Tiny;
 use Term::ANSIColor;
 
 
+my $replace_files = $ARGV[0];
 my $mech = WWW::Mechanize->new();
-
 
 #my $url = 'http://www.waterqualitydata.us/portal.jsp';
 
@@ -90,6 +90,17 @@ sub GetSiteIdsJSON($)
         try
         {
             my $site_id = "USGS-$keys[$i]";
+
+            
+            if($replace_files && -e "json/$site_id.json")
+            {
+                print color "blue";
+                print "Miss $site_id.json\n";
+                print color "reset";
+                next;
+            }
+
+
             GetDataBySiteId($site_id);
         
             print color "green";
