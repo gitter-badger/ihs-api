@@ -7,7 +7,6 @@ use WWW::Mechanize;
 use Try::Tiny;
 use Term::ANSIColor;
 
-our $json_obj = {};
 
 my $mech = WWW::Mechanize->new();
 
@@ -99,7 +98,7 @@ sub GetSiteIdsJSON($)
             
             if($i % 100 == 0)
             {
-                WriteInJSONFile("data.json");
+                #WriteInJSONFile("data.json");
             }
         }
         catch
@@ -108,7 +107,7 @@ sub GetSiteIdsJSON($)
             print $_;
             print color "reset";
             
-            WriteInJSONFile("data.json"); 
+            #WriteInJSONFile("data.json"); 
 
             next;
         }
@@ -125,6 +124,8 @@ sub GetDataBySiteId($)
     my $csv = $mech->get( $url ) or die "$site_id - FAILED, $!";
     $csv = $$csv{_content};
     
+    my $json_obj = {};
+
     my @lines = split("\n", $csv, -1); 
     
     my @keys_arr = split(",", $lines[0], -1);
@@ -156,6 +157,8 @@ sub GetDataBySiteId($)
         }
 
     }
+
+    WriteInJSONFile("json/$site_id.json", $json_obj);
 =comment
     my $fh2;
     open $fh2, ">", "csv/${site_id}.csv" or die "$site_id - FAILED, $!";
@@ -166,9 +169,9 @@ sub GetDataBySiteId($)
     return 1;
 }
 
-sub WriteInJSONFile($)
+sub WriteInJSONFile($$)
 {
-    my ($file_name) = @_;
+    my ($file_name, $json_obj) = @_;
     
     my $json = to_json($json_obj);
 
@@ -183,5 +186,5 @@ sub WriteInJSONFile($)
 #GetSiteIdsXML("sites.xml");
 GetSiteIdsJSON("../usgs-sites-current-info.json");
 
-WriteInJSONFile("data.json");
+#WriteInJSONFile("data.json");
 
